@@ -30,3 +30,6 @@ nyc_subway_data = read_csv("hw2_prob1_dataset.csv") %>%
 nyc_subway_data
 
 ```
+## Part2: A brief summary of the dataset:
+
+The cleaned dataset contains variables such as subway line, station name, latitude/longitude, routes served, entry status, vending, entrance type, and ADA compliance. To clean the data, I standardized column names using clean_names(), selected only relevant columns with select(), and converted the entry variable from character ("YES"/"NO") to logical (TRUE/FALSE) using case_when(). The resulting dataset has `r nrow(nyc_subway_data)` rows and `r ncol(nyc_subway_data)` columns, and it is tidy since each variable is a column, each observation is a row, and each value is a cell.
