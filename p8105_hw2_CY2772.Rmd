@@ -120,3 +120,29 @@ mr_trash_wheel_cleaned = mr_trash_wheel %>%
 mr_trash_wheel_cleaned
 
 ```
+
+## Part2: Data cleaning for Professor Trash Wheel sheet
+```{r}
+pro_trash_wheel = 
+  read_excel("hw2_prob2_datas.xlsx",
+             sheet = "Professor Trash Wheel",
+             skip = 1,
+             range = "A2:M121",) %>%
+  janitor::clean_names() %>% 
+  select(dumpster:homes_powered) %>% 
+  mutate(year, year = as.numeric(year))
+
+pro_trash_wheel 
+```
+## Part3: Data cleaning for Gwynnda sheet
+```{r}
+gwynnda_df = 
+  read_excel("hw2_prob2_datas.xlsx", 
+             sheet = "Gwynnda Trash Wheel",
+             skip = 1,
+             range = "A2:L265", ) %>% 
+  janitor::clean_names() %>% 
+  select(dumpster:homes_powered) %>% 
+  mutate(year,year = as.numeric(year))
+gwynnda_df
+```
