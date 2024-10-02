@@ -33,3 +33,36 @@ nyc_subway_data
 ## Part2: A brief summary of the dataset:
 
 The cleaned dataset contains variables such as subway line, station name, latitude/longitude, routes served, entry status, vending, entrance type, and ADA compliance. To clean the data, I standardized column names using clean_names(), selected only relevant columns with select(), and converted the entry variable from character ("YES"/"NO") to logical (TRUE/FALSE) using case_when(). The resulting dataset has `r nrow(nyc_subway_data)` rows and `r ncol(nyc_subway_data)` columns, and it is tidy since each variable is a column, each observation is a row, and each value is a cell.
+
+## Part3: Answer the following questions using these data:
+### How many distinct stations are there? 
+```{r}
+distinct_station = 
+   nyc_subway_data %>%
+  distinct(line, station_name) %>%
+  nrow()
+```
+There are `r distinct_station` distinct stations in this dataset. 
+
+### How many stations are ADA compliant?
+```{r}
+ada_compliant =
+  nyc_subway_data %>% 
+  filter(ada == TRUE) %>% 
+  distinct(line, station_name) %>% 
+  nrow()
+```
+There are `r ada_compliant` ADA compliant stations. 
+
+### What proportion of station entrances / exits without vending allow entrance?
+```{r}
+proportion_no_vending_allows_entry = 
+  nyc_subway_data %>%
+  filter(vending == "NO") %>%  # Filter rows where there is no vending
+  summarise(proportion = mean(entry == TRUE)) %>%  # Calculate the proportion where entry is TRUE
+  pull(proportion)
+
+# Output the result
+proportion_no_vending_allows_entry
+```
+37.7% of station entrances / exits without vending allow entrance
