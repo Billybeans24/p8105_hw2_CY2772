@@ -66,3 +66,57 @@ proportion_no_vending_allows_entry =
 proportion_no_vending_allows_entry
 ```
 37.7% of station entrances / exits without vending allow entrance
+
+## Part4: Reformat data so that route number and route name are distinct variables.
+```{r reformat routes}
+nyc_subway_data_refored = 
+  nyc_subway_data %>%
+  mutate(across(starts_with("route"), as.character)) %>%  # Ensure all route columns are characters
+  pivot_longer(
+    cols = starts_with("route"), # Specify the columns for the routes
+    names_to = "route_number",
+    values_to = "route") %>%
+  drop_na(route)# Drop rows where route is NA
+nyc_subway_data_refored
+
+```
+
+### How many distinct stations serve the A train?*
+```{r distinct stations A train}
+nyc_subway_data_refored %>% 
+  filter(route == "A") %>% 
+  distinct(line, station_name) %>% 
+  nrow()
+```
+There are distinct stations serve the A train. 
+
+
+### How many are ADA compliant of the stations that serve the A train?*
+```{r ADA compliant A train}
+nyc_subway_data_refored %>% 
+  filter(ada == TRUE) %>%  
+  filter(route == "A") %>% 
+  distinct(line, station_name) %>% 
+  nrow()
+```
+Of the 60 stations that serve the A train,17 have at least one ADA compliant entry or exit.
+
+# Problem 2
+## Part1. Data Cleaning for Mr trash wheel sheet
+```{r}
+# Specify sheet and omit non-data entries (skip rows and specify range)
+mr_trash_wheel = read_excel("hw2_prob2_datas.xlsx",
+                            sheet = "Mr. Trash Wheel", 
+                            skip = 1,  # Skip the first row if it's non-data or a note
+                            range = "A2:N653")  # Adjust the range based on the actual data layout
+# Omit rows that do not include dumpster-specific data
+mr_trash_wheel_cleaned = mr_trash_wheel %>%
+  filter(!is.na(Dumpster)) %>%  # Keep only rows where the 'dumpster' column is not NA
+  janitor::clean_names() %>%
+  select(dumpster:homes_powered) %>% 
+  mutate(sports_balls = round(sports_balls, 0)) %>% 
+  mutate(sports_balls = as.integer(sports_balls)) %>% 
+  mutate(year, year = as.numeric(year))
+mr_trash_wheel_cleaned
+
+```
