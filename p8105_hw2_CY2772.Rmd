@@ -180,6 +180,9 @@ total_weight_prof_trash_wheel
 total_cig_butts_gwynnda_june_2022
 
 ```
+I combined the data from Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda into a single dataset called combined_trash_wheel_data, which consists of 1,033 observations. This combined dataset captures information on the weight (in tons) and volume (in cubic yards) of trash removed by each trash wheel from Baltimore's Inner Harbor between May 2016 and June 2023. It also includes details on the various types of trash collected, such as plastic bottles, cigarette butts, and sports balls, along with the quantities removed by each trash wheel during this period. Additionally, the homes_powered variable indicates the number of homes powered per ton of trash collected.
+
+In total, Professor Trash Wheel collected 246.74 tons of trash. Gwynnda collected 18,120 cigarette butts in June 2022.
 # Problem 3
 ## Part1: Data Wrangling
 ```{r}
