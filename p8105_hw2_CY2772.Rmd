@@ -7,7 +7,7 @@ output: github_document
 ```{r}
 library(tidyverse)
 library(readxl)
-library(devtools)
+
 ```
 # Problem 1
 ## Part1: Data Cleaning:
@@ -157,7 +157,7 @@ combined_trash_wheel_data = bind_rows(mr_trash_wheel_cleaned,
                                        gwynnda_df)
 combined_trash_wheel_data
 ```
-## A paragraph about these data
+## Part5: A paragraph about these data
 ```{r}
 # Number of observations in the combined dataset
 total_observations = nrow(combined_trash_wheel_data)
@@ -180,4 +180,134 @@ total_weight_prof_trash_wheel
 total_cig_butts_gwynnda_june_2022
 
 ```
+# Problem 3
+## Part1: Data Wrangling
+```{r}
+# Clean and separate baker names, handling cases where bakers have multiple names
+bakers_df =
+  read_csv("./dataset_hw3/gbb_datasets/bakers.csv", 
+           na = c("NA", "", ".")) %>%
+  janitor::clean_names() %>%
+  separate(baker_name, into = c("first_name", "last_name"), 
+           sep = " ", 
+           extra = "merge",  # This ensures that middle names are included in 'last_name'
+           fill = "right")  # If there's no last name, it'll fill it with NA
+# Load and clean bakes data
+bakes_df = read_csv("./dataset_hw3/gbb_datasets/bakes.csv", 
+                    na = c("NA", "", ".")) %>%
+  janitor::clean_names()
+# Load and clean results data, skipping 2 rows if needed
+results_df = read_csv("./dataset_hw3/gbb_datasets/results.csv", 
+                      skip = 2, 
+                      na = c("NA", "", ".")) %>%
+  janitor::clean_names()
+# Check column names in both datasets
+colnames(bakes_df)
+colnames(bakers_df)
+colnames(results_df)
+```
 
+## Part2: Clean each dataset:
+* Check for missing values: Use summary() or is.na() in R to check for missing data.
+* Check for consistency across datasets: Use anti_join() in R to detect discrepancies between datasets (e.g., missing matches between bakers and results).
+
+### Step 1: Use anti_join() to check dataset matching and completeness.
+```{r}
+# Combine first_name and last_name into a single 'baker' column in bakers_df
+bakers_df = bakers_df %>%
+  mutate(baker = paste(first_name, last_name))
+
+# Check for unmatched rows using correct 'by' syntax
+unmatched_bakes = anti_join(bakes_df, bakes_df, by = c("baker", "series"))
+unmatched_results = anti_join(results_df, bakers_df, by = c("baker", "series"))
+unmatched_bakers = anti_join(bakers_df, results_df, by = c("baker", "series"))
+
+# View unmatched rows (if any)
+unmatched_bakes
+unmatched_results
+unmatched_bakers
+
+```
+### Step 2: Standardize Baker Names (Resolve "Joanne" to "Jo")
+The anti_join() result showed that the names "Joanne" and "Jo" do not match, although they both belong to the same series. We assume they refer to the same person and will standardize the name to "Jo" across the datasets.
+```{r}
+# Standardize the 'baker' name from 'Joanne' to 'Jo' in results_df
+results_df = results_df %>%
+  mutate(baker = ifelse(baker == "Joanne", "Jo", baker))
+
+# Remove any extra quotes around the name 'Jo' in bakes_df if necessary
+bakes_df = bakes_df %>%
+  mutate(baker = ifelse(baker == '"Jo"', "Jo", baker))  # Standardize 'Jo' format
+```
+### Step 3: Verify Completeness After Correcting Baker Names
+After standardizing the names (e.g., renaming "Joanne" to "Jo"), we will recheck the datasets to ensure that there are no remaining mismatches between the bakes_df, results_df, and bakers_df datasets.
+```{r}
+# Recheck for any unmatched rows after correcting the names
+unmatched_bakes = anti_join(bakes_df, bakers_df, by = c("baker", "series"))
+unmatched_results = anti_join(results_df, bakers_df, by = c("baker", "series"))
+unmatched_bakers = anti_join(bakers_df, results_df, by = c("baker", "series"))
+
+# Display unmatched rows (if any exist)
+unmatched_bakes
+unmatched_results
+unmatched_bakers
+
+```
+
+## Part 3: Merge the datasets
+
+To combine the results_df, bakes_df, and bakers_df datasets into a single unified dataset, we perform successive left_join() operations. The resulting dataset is then reorganized and saved as a CSV file.
+
+```{r}
+# Merge results_df, bakes_df, and bakers_df into one final dataset
+final_df <- results_df %>%
+  left_join(bakes_df, by = c("baker", "series", "episode")) %>%
+  left_join(bakers_df, by = c("baker", "series")) %>%
+  relocate(series, episode, .before = "baker")  # Reorder columns for better readability
+
+# Export the final dataset as a CSV file
+write.csv(final_df, file = "./dataset_hw3/gbb_datasets/final.csv")
+
+```
+
+##  Description 
+
+Upon reviewing the raw data, I found that while bakers.csv contains the full names of the bakers, both bakes.csv and results.csv only list the first names. To address this, I split the full names in bakers.csv into first and last names. Additionally, I noticed that the first two rows of results.csv contained unnecessary information, so I skipped them to simplify processing.
+
+Next, I used the anti_join function to identify any inconsistencies between the datasets and resolved the mismatches, particularly with the baker names. After ensuring all data was aligned, I merged the datasets in a way that retained all relevant information. I also reorganized the variables for better clarity, placing the series and episode information before the baker's name.
+
+Finally, I saved the merged dataset in the gbb_dataset directory. The resulting dataset combines all the information from bakers.csv, bakes.csv, and results.csv without losing any data. The variables are arranged logically, making it easy for users to quickly locate bakers based on the series and episode.
+
+
+## Part 4: Create table showing winner or star baker
+
+Create a reader-friendly table showing the star baker or winner of each episode in Seasons 5 through 10.
+```{r}
+# Filter results for seasons 5 to 10 and include only winners and star bakers
+winners_df <- results_df %>%
+  filter(between(series, 5, 10), result %in% c("WINNER", "STAR BAKER")) %>%
+  select(series, episode, baker, result)
+
+# Pivot the data and arrange by episode, then display it in a table format
+winners_df %>%
+  pivot_wider(names_from = series, values_from = baker) %>%
+  arrange(episode) %>%
+  knitr::kable()
+```
+From the results, we observe that each episode of every season features a baker being awarded "STAR BAKER," and at the end of each season, a "WINNER" is crowned. It seems logical to assume that the more often a baker is named "STAR BAKER," the higher their chances of becoming the season’s "WINNER." This pattern holds for Nadiya in season 6, Candice in season 7, Sophie in season 8, and Rahul in season 9. However, the winners of seasons 5 and 10 did not follow this trend.
+## Part 5: Import the views dataset
+```{r}
+# Load and clean viewership data, reshaping it for analysis
+viewership_df =
+  read_csv("./dataset_hw3/gbb_datasets/viewers.csv") %>%
+  janitor::clean_names() %>%
+  gather(key = "series", value = "viewership", series_1:series_10) %>%
+  mutate(
+    series = as.numeric(gsub("series_", "", series))  # Extract series number and convert to numeric
+  ) %>%
+  arrange(series) %>%
+  select(series, everything())  # Ensure 'series' is the first column
+knitr::kable(head(viewership_df, 10), caption = "First 10 rows in the Viewership dataset")
+```
+I imported the data, cleaned the variable names, and organized it using pivot_longer. The dataset now has a series column representing each season and a viewership column containing the corresponding viewership data. I removed the "series_" prefix to convert the series numbers into numeric values and then arranged the data in ascending order by series. The first ten rows of this dataset are shown above.
+The average viewership in series 1 is `r viewership_df |> filter(series == "1") |> summarise(mean(viewership, na.rm = TRUE))`. The average viewership in series 5 is `r viewership_df |> filter(series == "5") |> summarise(average = round(mean(viewership, na.rm = TRUE),2))`.
