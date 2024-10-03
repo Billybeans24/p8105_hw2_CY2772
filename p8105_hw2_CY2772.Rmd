@@ -18,7 +18,7 @@ library(devtools)
 
 ```{r}
 # Read and clean the data
-nyc_subway_data = read_csv("hw2_prob1_dataset.csv") %>% 
+nyc_subway_data = read_csv("./dataset_hw3/hw2_prob1_dataset.csv") %>% 
   janitor::clean_names() %>% 
   select(line, station_name, station_latitude, station_longitude, route1:route11, entry, vending, entrance_type, ada) %>% 
   mutate(entry = case_when(
@@ -105,7 +105,7 @@ Of the 60 stations that serve the A train,17 have at least one ADA compliant ent
 ## Part1. Data Cleaning for Mr trash wheel sheet
 ```{r}
 # Specify sheet and omit non-data entries (skip rows and specify range)
-mr_trash_wheel = read_excel("hw2_prob2_datas.xlsx",
+mr_trash_wheel = read_excel("./dataset_hw3/hw2_prob2_datas.xlsx",
                             sheet = "Mr. Trash Wheel", 
                             skip = 1,  # Skip the first row if it's non-data or a note
                             range = "A2:N653")  # Adjust the range based on the actual data layout
@@ -116,7 +116,8 @@ mr_trash_wheel_cleaned = mr_trash_wheel %>%
   select(dumpster:homes_powered) %>% 
   mutate(sports_balls = round(sports_balls, 0)) %>% 
   mutate(sports_balls = as.integer(sports_balls)) %>% 
-  mutate(year, year = as.numeric(year))
+  mutate(year = as.numeric(year)) %>% 
+  mutate(trash_wheel = "mr_trash")
 mr_trash_wheel_cleaned
 
 ```
@@ -124,25 +125,59 @@ mr_trash_wheel_cleaned
 ## Part2: Data cleaning for Professor Trash Wheel sheet
 ```{r}
 pro_trash_wheel = 
-  read_excel("hw2_prob2_datas.xlsx",
+  read_excel("./dataset_hw3/hw2_prob2_datas.xlsx",
              sheet = "Professor Trash Wheel",
              skip = 1,
              range = "A2:M121",) %>%
   janitor::clean_names() %>% 
-  select(dumpster:homes_powered) %>% 
-  mutate(year, year = as.numeric(year))
+  select(dumpster:homes_powered) %>%
+  mutate(year = as.numeric(year)) %>% 
+  mutate(trash_wheel = "pro_trash")
 
 pro_trash_wheel 
 ```
 ## Part3: Data cleaning for Gwynnda sheet
 ```{r}
 gwynnda_df = 
-  read_excel("hw2_prob2_datas.xlsx", 
+  read_excel("./dataset_hw3/hw2_prob2_datas.xlsx", 
              sheet = "Gwynnda Trash Wheel",
              skip = 1,
              range = "A2:L265", ) %>% 
   janitor::clean_names() %>% 
-  select(dumpster:homes_powered) %>% 
-  mutate(year,year = as.numeric(year))
+  select(dumpster:homes_powered) %>%
+  mutate(trash_wheel = "gwynnda_trash") %>% 
+  mutate(year = as.numeric(year))
 gwynnda_df
 ```
+
+## Part4: Combined Data
+```{r}
+combined_trash_wheel_data = bind_rows(mr_trash_wheel_cleaned,
+                                       pro_trash_wheel,
+                                       gwynnda_df)
+combined_trash_wheel_data
+```
+## A paragraph about these data
+```{r}
+# Number of observations in the combined dataset
+total_observations = nrow(combined_trash_wheel_data)
+
+# Total weight of trash collected by Professor Trash Wheel
+total_weight_prof_trash_wheel = combined_trash_wheel_data %>%
+  filter(trash_wheel == "pro_trash") %>%
+  summarise(total_weight = sum(weight_tons, na.rm = TRUE)) %>%
+  pull(total_weight)
+
+# Total number of cigarette butts collected by Gwynnda in June 2022
+total_cig_butts_gwynnda_june_2022 = combined_trash_wheel_data %>%
+  filter(trash_wheel == "gwynnda_trash", month == "June", year == 2022) %>%
+  summarise(total_cig_butts = sum(cigarette_butts, na.rm = TRUE)) %>%
+  pull(total_cig_butts)
+
+# Print the results
+total_observations
+total_weight_prof_trash_wheel
+total_cig_butts_gwynnda_june_2022
+
+```
+
